@@ -1,0 +1,90 @@
+# NVIDIA AI Desktop Automation Agent
+
+## Overview
+This system uses NVIDIA's Mistral AI to analyze desktop screenshots and provide click coordinates for automated GUI interaction. It continuously takes screenshots, sends them to AI, and executes the recommended actions.
+
+## Features
+- **Screenshot capture**: Takes desktop screenshots automatically
+- **AI analysis**: Sends images to NVIDIA Mistral AI for analysis
+- **Coordinate extraction**: Gets exact click coordinates from AI response
+- **Click execution**: Performs clicks, double-clicks, and other actions
+- **Loop automation**: Continuous operation with feedback loop
+
+## Setup
+
+### 1. Install Dependencies
+```bash
+pip install pyautogui Pillow opencv-python numpy requests
+```
+
+### 2. Configure API Key
+Replace the placeholder in `nvidia_ai_agent.py`:
+```python
+API_KEY = "your-actual-nvidia-api-key-here"
+```
+
+## Usage
+
+### Basic Usage
+```bash
+python3 nvidia_ai_agent.py
+```
+
+### Custom Objectives
+Modify the objective string in the script:
+```python
+agent.run_automation_loop("Find and click SolidWorks icon on desktop")
+```
+
+### Available Objectives Examples
+- "Find and launch SolidWorks from desktop"
+- "Click on Chrome browser icon"
+- "Open File Explorer and navigate to Documents"
+- "Find the Start menu and click it"
+
+## How It Works
+
+1. **Screenshot**: Takes full desktop screenshot
+2. **AI Analysis**: Sends image + objective to NVIDIA Mistral AI
+3. **Response Parsing**: Extracts JSON with coordinates and actions
+4. **Action Execution**: Performs click at specified coordinates
+5. **Loop**: Repeats process until objective complete or max steps reached
+
+## Response Format
+The AI returns JSON with:
+```json
+{
+  "click_coordinates": [x, y],
+  "confidence": 0.95,
+  "element_description": "SolidWorks icon",
+  "next_action": "click",
+  "reasoning": "Found SolidWorks desktop shortcut"
+}
+```
+
+## Safety Features
+- Fail-safe: Move mouse to top-left corner to abort
+- Confidence threshold: Only clicks when confidence > 0.5
+- Step limit: Maximum 50 steps per objective
+- Error handling: Graceful failure with retry logic
+
+## Running the System
+
+### Test Mode (Safe)
+```bash
+python3 nvidia_ai_agent.py
+```
+
+### Custom Objective
+```python
+from nvidia_ai_agent import NVIDIAAutomationAgent
+
+agent = NVIDIAAutomationAgent("your-api-key")
+agent.run_automation_loop("Your specific objective here")
+```
+
+## Troubleshooting
+- Ensure NVIDIA API key is valid
+- Check internet connection for API calls
+- Verify screen resolution is detected correctly
+- Run with administrator privileges on Windows for SolidWorks automation

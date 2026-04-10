@@ -1,0 +1,164 @@
+# NVIDIA AI Desktop Automation Agent
+
+## Overview
+This system uses NVIDIA's Mistral AI to analyze desktop screenshots and provide click coordinates for automated GUI interaction. It continuously takes screenshots, sends them to AI, and executes the recommended actions until assembly completion, then generates optimized C++ code.
+
+## Complete Setup & Run Instructions
+
+### Step 1: Install Dependencies
+```bash
+# Python dependencies
+pip install pyautogui Pillow opencv-python numpy requests
+
+# C++ dependencies (Windows)
+# Install OpenCV via vcpkg:
+vcpkg install opencv4:x64-windows
+
+# C++ dependencies (Linux)
+sudo apt-get install libopencv-dev cmake build-essential
+
+# C++ dependencies (macOS)
+brew install opencv cmake
+```
+
+### Step 2: Configure API Keys
+1. **Python AI Agent**: Edit `nvidia_ai_agent.py`
+   ```python
+   API_KEY = "your-actual-nvidia-api-key-here"
+   ```
+
+2. **C++ AI Integration**: Edit `assembly_automation.cpp` (line 85)
+   ```cpp
+   std::string api_key = "your-actual-nvidia-api-key-here";
+   ```
+
+### Step 3: Run Python Version (Immediate Testing)
+```bash
+# Test basic functionality
+python3 nvidia_ai_agent.py
+
+# Monitor output for AI responses and click coordinates
+```
+
+### Step 4: Build C++ Version (Production)
+```bash
+# Make build script executable
+chmod +x build_and_run.sh
+
+# Build and run
+./build_and_run.sh
+
+# OR manual build:
+mkdir -p build && cd build
+cmake ..
+cmake --build . --config Release
+
+# Run executable
+./assembly_automation          # Linux/macOS
+./Release/assembly_automation.exe  # Windows
+```
+
+### Step 5: Monitor Assembly Progress
+The system runs in continuous loop:
+1. Takes screenshot every 2 seconds
+2. Sends to NVIDIA AI for analysis
+3. Gets click coordinates
+4. Executes clicks
+5. Checks assembly completion
+6. Repeats until complete
+
+### Step 6: Generate Final Optimized Code
+When assembly completes successfully:
+- System automatically generates `final_assembly_automation.cpp`
+- Contains pre-calculated coordinates for fastest execution
+- No AI calls needed - pure optimized C++
+
+## Quick Start Commands
+
+### Python (Development)
+```bash
+python3 nvidia_ai_agent.py
+```
+
+### C++ (Production)
+```bash
+# One-command build & run
+./build_and_run.sh
+```
+
+### Custom Objectives
+```python
+# In nvidia_ai_agent.py
+agent.run_automation_loop("Complete SolidWorks assembly from desktop")
+
+# In assembly_automation.cpp
+std::string objective = "Complete SolidWorks assembly automation";
+```
+
+## System Architecture
+
+### Python Layer (Development)
+- `nvidia_ai_agent.py`: AI-powered screenshot analysis
+- `solidworks_automation.py`: Basic automation framework
+- `ai_vision_client.py`: NVIDIA API integration
+
+### C++ Layer (Production)
+- `assembly_automation.cpp`: Optimized native implementation
+- `final_assembly_automation.cpp`: Generated optimized code
+- Uses Windows API for precise control
+
+## Verification Steps
+
+### 1. Test Python Agent
+```bash
+python3 nvidia_ai_agent.py
+# Should show: "Starting NVIDIA AI automation..."
+```
+
+### 2. Test C++ Build
+```bash
+cd build
+cmake ..
+cmake --build . --config Release
+# Should create: assembly_automation executable
+```
+
+### 3. Test Assembly Completion
+```bash
+# Run C++ version
+./assembly_automation
+# Should generate: final_assembly_automation.cpp
+```
+
+## Troubleshooting
+
+### Common Issues
+1. **API Key Error**: Replace placeholder with actual NVIDIA API key
+2. **OpenCV Not Found**: Install via package manager or vcpkg
+3. **Permission Denied**: Run as Administrator (Windows) or use sudo (Linux)
+4. **Build Failures**: Ensure CMake and build tools installed
+
+### Debug Mode
+```bash
+# Enable debug output
+export DEBUG=1
+python3 nvidia_ai_agent.py
+
+# Verbose C++ build
+cmake --build . --config Debug --verbose
+```
+
+## File Structure
+```
+├── nvidia_ai_agent.py          # Python AI agent
+├── assembly_automation.cpp     # C++ main automation
+├── final_assembly_automation.cpp # Generated optimized code
+├── build_and_run.sh           # Build script
+├── CMakeLists.txt            # CMake configuration
+└── README.md                 # This file
+```
+
+## Performance Notes
+- Python: ~2-3 seconds per AI call
+- C++: ~0.1 seconds per screenshot analysis
+- Generated C++: ~0.01 seconds per click (no AI calls)

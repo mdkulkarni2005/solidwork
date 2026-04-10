@@ -32,13 +32,32 @@ class SolidWorksAutomation:
         """Move mouse to coordinates"""
         pyautogui.moveTo(x, y, duration=duration)
         
-    def take_screenshot(self, region: Tuple[int, int, int, int] = None) -> str:
-        """Take screenshot and return base64 encoded image"""
+    def take_screenshot(self, region: Tuple[int, int, int, int] = None, filename: str = None) -> str:
+        """Take screenshot and save to system_images folder, return file path"""
+        # Create system_images directory if it doesn't exist
+        images_dir = os.path.join(os.getcwd(), "system_images")
+        os.makedirs(images_dir, exist_ok=True)
+        
+        # Generate filename if not provided
+        if not filename:
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            filename = f"screenshot_{timestamp}.png"
+        
+        # Ensure proper path handling for spaces and special characters
+        filepath = os.path.join(images_dir, filename)
+        filepath = os.path.normpath(filepath)
+        
+        # Take screenshot
         screenshot = pyautogui.screenshot(region=region)
+        screenshot.save(filepath)
+        
+        # Also return base64 for backward compatibility
         buffer = io.BytesIO()
         screenshot.save(buffer, format='PNG')
         buffer.seek(0)
-        return base64.b64encode(buffer.getvalue()).decode()
+        base64_data = base64.b64encode(buffer.getvalue()).decode()
+        
+        return filepath
     
     def find_image_on_screen(self, template_path: str, confidence: float = 0.8) -> List[Tuple[int, int]]:
         """Find template image on screen and return coordinates"""
@@ -109,28 +128,39 @@ class SolidWorksAutomation:
                 time.sleep(1)
                 
     def run_automation(self):
-        """Main automation workflow"""
+        """Main automation workflow with fresh screenshots"""
         print("Starting SolidWorks Assembly Automation...")
         
         # Step 1: Launch SolidWorks
         if not self.launch_solidworks():
             return False
-            
+
         # Step 2: Create assembly project
         self.create_assembly_project()
-        
+
         # Step 3: Wait for user to import components
         self.wait_for_user_components()
-        
+
         # Step 4: Start automated assembly process
         print("Starting automated assembly process...")
+        step_count = 0
         
         while True:
-            # Take screenshot
-            screenshot = self.take_screenshot()
+            step_count += 1
+            print(f"Step {step_count}: Taking fresh screenshot...")
             
-            # Analyze with AI
-            ai_response = self.analyze_screen_with_ai(screenshot)
+            # Always take a fresh screenshot with timestamp
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            screenshot_path = self.take_screenshot(filename=f"step_{step_count}_{timestamp}.png")
+            
+            # Read the fresh screenshot file for AI analysis
+            with open(screenshot_path, 'rb') as f:
+                screenshot_data = base64.b64encode(f.read()).decode()
+            
+            print(f"Analyzing fresh screenshot: {screenshot_path}")
+            
+            # Analyze with AI using the fresh image
+            ai_response = self.analyze_screen_with_ai(screenshot_data)
             
             # Perform assembly step
             self.perform_assembly_step(ai_response)
@@ -139,6 +169,9 @@ class SolidWorksAutomation:
             if ai_response.get("next_step") == "assembly_complete":
                 print("Assembly completed successfully!")
                 break
+                
+            time.sleep(2)
+        return True
                 
             time.sleep(2)
         

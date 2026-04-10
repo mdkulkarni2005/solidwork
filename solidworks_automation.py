@@ -62,20 +62,63 @@ class SolidWorksAutomation:
     def find_image_on_screen(self, template_path: str, confidence: float = 0.8) -> List[Tuple[int, int]]:
         """Find template image on screen and return coordinates"""
         try:
-            locations = list(pyautogui.locateAllOnScreen(template_path, confidence=confidence))
-            return [(loc.left + loc.width // 2, loc.top + loc.height // 2) for loc in locations]
-        except pyautogui.ImageNotFoundException:
-            return []
-    
     def launch_solidworks(self):
-        """Launch SolidWorks application"""
+        """Launch SolidWorks application with flexible path detection"""
+        possible_paths = [
+            "C:\\Program Files\\SOLIDWORKS Corp\\SOLIDWORKS\\SLDWORKS.exe",
+            "C:\\Program Files\\SOLIDWORKS 2024\\SOLIDWORKS\\SLDWORKS.exe",
+            "C:\\Program Files\\SOLIDWORKS 2023\\SOLIDWORKS\\SLDWORKS.exe",
+            "C:\\Program Files\\SOLIDWORKS 2022\\SOLIDWORKS\\SLDWORKS.exe",
+            "C:\\Program Files\\SOLIDWORKS 2021\\SOLIDWORKS\\SLDWORKS.exe"
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                try:
+                    print(f"Launching SolidWorks from: {path}")
+                    subprocess.Popen([path])
+                    time.sleep(15)  # Wait longer for SolidWorks to fully load
+                    return True
+                except Exception as e:
+                    print(f"Failed to launch from {path}: {e}")
+                    continue
+        
+        print("Could not find SolidWorks installation. Please:")
+        print("1. Ensure SolidWorks is installed")
+        print("2. Or manually start SolidWorks before running this script")
+        return False
+            "C:\\Program Files\\SOLIDWORKS 2022\\SOLIDWORKS\\SLDWORKS.exe",
+            "C:\\Program Files\\SOLIDWORKS 2021\\SOLIDWORKS\\SLDWORKS.exe"
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                try:
+                    print(f"Launching SolidWorks from: {path}")
+                    subprocess.Popen([path])
+                    time.sleep(15)  # Wait longer for SolidWorks to fully load
+                    return True
+                except Exception as e:
+                    print(f"Failed to launch from {path}: {e}")
+                    continue
+        
+        # Try to find via registry or system PATH
         try:
-            subprocess.Popen(["C:\\Program Files\\SOLIDWORKS Corp\\SOLIDWORKS\\SLDWORKS.exe"])
-            time.sleep(10)  # Wait for SolidWorks to load
-            return True
-        except Exception as e:
-            print(f"Failed to launch SolidWorks: {e}")
-            return False
+            import winreg
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\\SolidWorks\\Applications\\SOLIDWORKS")
+            install_path, _ = winreg.QueryValueEx(key, "InstallPath")
+            exe_path = os.path.join(install_path, "SLDWORKS.exe")
+            if os.path.exists(exe_path):
+                subprocess.Popen([exe_path])
+                time.sleep(15)
+                return True
+        except:
+            pass
+            
+        print("Could not find SolidWorks installation. Please:")
+        print("1. Ensure SolidWorks is installed")
+        print("2. Or manually start SolidWorks before running this script")
+        return False
     
     def create_assembly_project(self):
         """Create new assembly project"""
@@ -128,39 +171,28 @@ class SolidWorksAutomation:
                 time.sleep(1)
                 
     def run_automation(self):
-        """Main automation workflow with fresh screenshots"""
+        """Main automation workflow"""
         print("Starting SolidWorks Assembly Automation...")
         
         # Step 1: Launch SolidWorks
         if not self.launch_solidworks():
             return False
-
+            
         # Step 2: Create assembly project
         self.create_assembly_project()
-
+        
         # Step 3: Wait for user to import components
         self.wait_for_user_components()
-
+        
         # Step 4: Start automated assembly process
         print("Starting automated assembly process...")
-        step_count = 0
         
         while True:
-            step_count += 1
-            print(f"Step {step_count}: Taking fresh screenshot...")
+            # Take screenshot
+            screenshot = self.take_screenshot()
             
-            # Always take a fresh screenshot with timestamp
-            timestamp = time.strftime("%Y%m%d_%H%M%S")
-            screenshot_path = self.take_screenshot(filename=f"step_{step_count}_{timestamp}.png")
-            
-            # Read the fresh screenshot file for AI analysis
-            with open(screenshot_path, 'rb') as f:
-                screenshot_data = base64.b64encode(f.read()).decode()
-            
-            print(f"Analyzing fresh screenshot: {screenshot_path}")
-            
-            # Analyze with AI using the fresh image
-            ai_response = self.analyze_screen_with_ai(screenshot_data)
+            # Analyze with AI
+            ai_response = self.analyze_screen_with_ai(screenshot)
             
             # Perform assembly step
             self.perform_assembly_step(ai_response)
@@ -169,9 +201,6 @@ class SolidWorksAutomation:
             if ai_response.get("next_step") == "assembly_complete":
                 print("Assembly completed successfully!")
                 break
-                
-            time.sleep(2)
-        return True
                 
             time.sleep(2)
         

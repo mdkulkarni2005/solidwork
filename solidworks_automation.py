@@ -63,42 +63,51 @@ class SolidWorksAutomation:
         """Find template image on screen and return coordinates"""
         try:
     def launch_solidworks(self):
-        """Launch SolidWorks application with flexible path detection"""
-        possible_paths = [
-            "C:\\Program Files\\SOLIDWORKS Corp\\SOLIDWORKS\\SLDWORKS.exe",
-            "C:\\Program Files\\SOLIDWORKS 2024\\SOLIDWORKS\\SLDWORKS.exe",
-            "C:\\Program Files\\SOLIDWORKS 2023\\SOLIDWORKS\\SLDWORKS.exe",
-            "C:\\Program Files\\SOLIDWORKS 2022\\SOLIDWORKS\\SLDWORKS.exe",
-            "C:\\Program Files\\SOLIDWORKS 2021\\SOLIDWORKS\\SLDWORKS.exe"
-        ]
+        """Launch SolidWorks by clicking on desktop/start menu using AI vision"""
+        print("Looking for SolidWorks on desktop...")
         
-        for path in possible_paths:
-            if os.path.exists(path):
-                try:
-                    print(f"Launching SolidWorks from: {path}")
-                    subprocess.Popen([path])
-                    time.sleep(15)  # Wait longer for SolidWorks to fully load
-                    return True
-                except Exception as e:
-                    print(f"Failed to launch from {path}: {e}")
-                    continue
+        # Take screenshot of desktop
+        desktop_screenshot = self.take_screenshot(filename="desktop_search.png")
         
-        print("Could not find SolidWorks installation. Please:")
-        print("1. Ensure SolidWorks is installed")
-        print("2. Or manually start SolidWorks before running this script")
-        return False
-            "C:\\Program Files\\SOLIDWORKS 2022\\SOLIDWORKS\\SLDWORKS.exe",
-            "C:\\Program Files\\SOLIDWORKS 2021\\SOLIDWORKS\\SLDWORKS.exe"
-        ]
+        # Read screenshot for AI analysis
+        with open(desktop_screenshot, 'rb') as f:
+            desktop_data = base64.b64encode(f.read()).decode()
         
-        for path in possible_paths:
-            if os.path.exists(path):
-                try:
-                    print(f"Launching SolidWorks from: {path}")
-                    subprocess.Popen([path])
-                    time.sleep(15)  # Wait longer for SolidWorks to fully load
-                    return True
-                except Exception as e:
+        # AI should detect SolidWorks icon and return coordinates
+        solidworks_coords = self.analyze_screen_with_ai(desktop_data)
+        
+        # Click on detected SolidWorks icon
+        if solidworks_coords.get("solidworks_found"):
+            x, y = solidworks_coords["solidworks_coords"]
+            self.click_at(x, y)
+            time.sleep(15)  # Wait for SolidWorks to load
+            return True
+        else:
+            # Try Windows Start Menu search
+            print("SolidWorks not found on desktop, searching Start Menu...")
+            pyautogui.press('win')
+            time.sleep(2)
+            pyautogui.write('solidworks')
+            time.sleep(2)
+            pyautogui.press('enter')
+            time.sleep(15)
+            return True
+    def analyze_screen_with_ai(self, image_base64: str) -> Dict[str, Any]:
+        """Send screenshot to AI for analysis and get click coordinates"""
+        # This is a placeholder for AI integration
+        # In real implementation, this would call your AI vision model
+        # Mock response for demonstration - includes SolidWorks detection
+        return {
+            "solidworks_found": True,
+            "solidworks_coords": (1200, 600),  # Mock coordinates for desktop icon
+            "components_found": [
+                {"name": "bearing_housing", "x": 500, "y": 300, "action": "click"},
+                {"name": "shaft", "x": 700, "y": 400, "action": "click"},
+                {"name": "mate_button", "x": 800, "y": 600, "action": "click"}
+            ],
+            "confidence": 0.85,
+            "next_step": "select_mate_type"
+        }
                     print(f"Failed to launch from {path}: {e}")
                     continue
         
